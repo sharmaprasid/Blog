@@ -1,26 +1,25 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user.model");
 
-const authenticateUser = async (req, res, next) => {
+function authenticateToken(req, res, next) {
   const token = req.header("Authorization");
+  if (!token) return res.sendStatus(401);
 
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized: Missing token" });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Use environment variable for the secret key
-    const user = await User.findById(decoded.user.id);
-
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized: User not found" });
-    }
-
+  jwt.verify(token, process.env.secretKey, (err, user) => {
+    if (err) return res.sendStatus(403);
     req.user = user;
     next();
-  } catch (error) {
-    return res.status(401).json({ message: "Unauthorized: Invalid token" });
-  }
-};
+  });
+}
 
-module.exports = authenticateUser;
+function authenticateVerificationToken(req, res, next) {
+  const verificationToken = req.params.verificationToken;
+  if (!verificationToken) return res.sendStatus(400);
+
+  jwt.verify(verificationToken, config.secretKey, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
+
+module.exports = { authenticateToken, authenticateVerificationToken };
