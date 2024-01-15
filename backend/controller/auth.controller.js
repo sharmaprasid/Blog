@@ -1,15 +1,14 @@
 const bcrypt = require("bcrypt");
-const User = require("../models/user");
+const User = require("../models/user.model");
 const jwtUtils = require("../utils/jwt");
-const emailUtils = require("../utils/emailUtils");
-const twofactorUtils = require("../utils/twofactorUtils");
-const config = require("../config/config");
-const passport = require("../utils/passportUtils");
+const emailUtils = require("../utils/emailVerification");
+const twofactorUtils = require("../utils/twofactor");
+const passport = require("../utils/passport");
 const crypto = require("crypto");
 
 async function register(req, res) {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
 
     if (existingUser) {
@@ -17,14 +16,23 @@ async function register(req, res) {
         .status(400)
         .json({ message: "Username or email already exists" });
     }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new User({ username, email, password });
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      role,
+    });
+
     await newUser.save();
 
     const verificationToken = jwtUtils.generateVerificationToken(newUser);
-    await emailUtils.sendVerificationEmail(newUser, verificationToken);
+    const verificationLink = `http://localhost:3000/api/auth/user/verify/${verificationToken}`;
+    await emailUtils.sendVerificationEmail(newUser, verificationLink);
 
-    res.status(201).json({
+    res.status(200).json({
       message: "User registered successfully. Verification email sent.",
     });
   } catch (error) {
@@ -35,10 +43,15 @@ async function register(req, res) {
 async function verifyEmail(req, res) {
   try {
     const user = req.user;
-    user.isVerified = true;
+    console.log("Before save:", user);
+    user.verified = true;
+    console.log("After setting isVerified:", user.verified);
+
     await user.save();
+    console.log("After save:", user);
     res.json({ message: "Email verification successful. You can now log in." });
   } catch (error) {
+    console.error("Error saving user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -46,13 +59,14 @@ async function verifyEmail(req, res) {
 async function login(req, res) {
   try {
     const { username, password, token } = req.body;
-    const user = await User.findOne({ username });
 
+    const user = await User.findOne({ username });
+    console.log(user.password);
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (!user.isVerified) {
+    if (!user.verified) {
       return res
         .status(401)
         .json({ message: "Email not verified. Check your inbox." });
@@ -92,7 +106,7 @@ async function refreshToken(req, res) {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.sendStatus(401);
 
-    jwt.verify(refreshToken, config.secretKey, (err, user) => {
+    jwt.verify(refreshToken, process.env.secretKey, (err, user) => {
       if (err) return res.sendStatus(403);
 
       const accessToken = jwtUtils.generateAccessToken(user);
@@ -117,7 +131,7 @@ async function forgotPassword(req, res) {
     user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
     await user.save();
 
-    const resetLink = `http://localhost:3000/auth/reset-password/${resetToken}`;
+    const resetLink = `http://localhost:3000/api/user/auth/reset-password/${resetToken}`;
     await emailUtils.sendResetPasswordEmail(user, resetLink);
 
     res.json({ message: "Password reset link sent to your email address" });

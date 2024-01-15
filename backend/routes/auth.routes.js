@@ -1,8 +1,8 @@
 const express = require("express");
-const passport = require("../utils/passportUtils");
-const authController = require("../controllers/authController");
-const authMiddleware = require("../middleware/authMiddleware");
-const twofactorMiddleware = require("../middleware/twofactorMiddleware");
+// const passport = require("../utils/passportUtils");
+const authController = require("../controller/auth.controller");
+const authMiddleware = require("../middlewares/auth.middleware");
+const twofactorMiddleware = require("../middlewares/twofactor.middleware");
 
 const router = express.Router();
 
@@ -16,17 +16,17 @@ router.post("/login", authController.login);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 
-router.get(
-  "/login/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
-router.get(
-  "/login/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
-    res.redirect("/user/profile");
-  }
-);
+// router.get(
+//   "/login/google",
+//   passport.authenticate("google", { scope: ["profile", "email"] })
+// );
+// router.get(
+//   "/login/google/callback",
+//   passport.authenticate("google", { failureRedirect: "/login" }),
+//   (req, res) => {
+//     res.redirect("/user/profile");
+//   }
+// );
 
 router.post(
   "/refresh-token",

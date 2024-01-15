@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const bcrypt = require("bcrypt");
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   email: { type: String, unique: true, required: true },
@@ -11,7 +11,10 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ["admin", "author", "user"], required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: Date,
-  verified: Boolean,
+  verified: {
+    type: Boolean,
+    default: false,
+  },
   lastLogin: Date,
   socialLinks: Object,
   preferences: Object,

@@ -1,6 +1,7 @@
 const nodemailer = require("nodemailer");
 
-async function sendVerificationEmail(user, verificationToken) {
+async function sendVerificationEmail(user, verificationLink) {
+  console.log(verificationLink);
   const transporter = nodemailer.createTransport({
     host: "sandbox.smtp.mailtrap.io",
     port: 2525,
@@ -14,7 +15,7 @@ async function sendVerificationEmail(user, verificationToken) {
     from: "aut@test.com",
     to: user.email,
     subject: "Email Verification",
-    text: `Click the following link to verify your email: ${verificationToken}`,
+    text: `Click the following link to verify your email: ${verificationLink}`,
   };
 
   await transporter.sendMail(mailOptions);
@@ -31,7 +32,7 @@ async function sendResetPasswordEmail(user, resetLink) {
   });
 
   const mailOptions = {
-    from: "your-email@example.com",
+    from: "aut@test.com",
     to: user.email,
     subject: "Password Reset",
     text: `Click the following link to reset your password: ${resetLink}`,

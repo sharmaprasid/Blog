@@ -1,4 +1,4 @@
-const twofactorUtils = require("../utils/twofactorUtils");
+const twofactorUtils = require("../utils/twofactor");
 
 function authenticateTwoFactor(req, res, next) {
   const { token } = req.body;

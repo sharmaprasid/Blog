@@ -6,11 +6,16 @@ const logRequestToFile = require("./middlewares/logger.middleware");
 const authenticateUser = require("./middlewares/auth.middleware");
 const handleErrors = require("./middlewares/error.middleware");
 const enableCORS = require("./middlewares/cors.middleware");
-const validateRequest = require("./middlewares/validation.middleware");
+const dotenv = require("dotenv");
+const userRoutes = require("./routes/user.routes");
+const authRoutes = require("./routes/auth.routes");
+const morgan = require("morgan");
+dotenv.config();
 
 const app = express();
 
 app.use(bodyParser.json());
+app.use(morgan("dev"));
 app.use(cors());
 app.use(enableCORS);
 app.use(logRequestToFile);
@@ -27,11 +32,32 @@ mongoose
     console.error("Error connecting to MongoDB:", err);
   });
 
-const userRoutes = require("./routes/user.routes");
-const blogPostRoutes = require("./routes/blogpost.routes");
+// const blogPostRoutes = require("./routes/blogpost.routes");
+// const { session } = require("passport");
+// app.use(
+//   session({
+//     secret: "yourSessionSecret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
+// app.use(passport.initialize());
+// app.use(passport.session());
+// app.get(
+//   "/auth/login/google",
+//   passport.authenticate("google", { scope: ["profile", "email"] })
+// );
 
+// app.get(
+//   "/auth/login/google/callback",
+//   passport.authenticate("google", { failureRedirect: "/login" }),
+//   (req, res) => {
+//     res.redirect("/user/profile");
+//   }
+// );
 app.use("/users", userRoutes);
-app.use("/blogposts", authenticateUser, validateRequest, blogPostRoutes);
+app.use("/api/auth/user", authRoutes);
+// app.use("/blogposts", authenticateUser, blogPostRoutes);
 
 app.use(handleErrors);
 
