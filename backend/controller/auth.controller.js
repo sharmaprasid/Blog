@@ -43,15 +43,46 @@ async function register(req, res) {
 async function verifyEmail(req, res) {
   try {
     const user = req.user;
-    console.log("Before save:", user);
+
     user.verified = true;
-    console.log("After setting isVerified:", user.verified);
 
     await user.save();
-    console.log("After save:", user);
+
     res.json({ message: "Email verification successful. You can now log in." });
   } catch (error) {
     console.error("Error saving user:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+async function enableTwoFactor(req, res) {
+  try {
+    const { username } = req.user;
+    console.log(username);
+    const user = await User.findOne({ username });
+
+    if (user.twofactorSecret) {
+      return res
+        .status(400)
+        .json({ message: "Two-factor authentication is already enabled" });
+    }
+
+    const twofactorSecret = twofactorUtils.generateTwoFactorSecret();
+    user.twofactorSecret = twofactorSecret;
+
+    await user.save();
+    const qrCodeImage = await twofactorUtils.generateQRCode(
+      twofactorSecret,
+      user.username,
+      "BLOGPROJECT"
+    );
+
+    res.json({
+      twofactorSecret,
+      qrCodeImage,
+      message: "Two-factor authentication enabled successfully",
+    });
+  } catch (error) {
+    console.error("Error enabling 2FA:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -61,7 +92,7 @@ async function login(req, res) {
     const { username, password, token } = req.body;
 
     const user = await User.findOne({ username });
-    console.log(user.password);
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -94,7 +125,14 @@ async function login(req, res) {
           .json({ message: "Invalid two-factor authentication token" });
       }
     }
+    user.refreshToken = refreshToken;
+    user.lastLogin = Date.now();
+    await user.save();
 
+    res.cookie("Authorization", accessToken, {
+      httpOnly: true,
+      secure: true,
+    });
     res.json({ accessToken, refreshToken });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
@@ -128,7 +166,7 @@ async function forgotPassword(req, res) {
 
     const resetToken = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
+    user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
     const resetLink = `http://localhost:3000/api/user/auth/reset-password/${resetToken}`;
@@ -174,4 +212,5 @@ module.exports = {
   refreshToken,
   forgotPassword,
   resetPassword,
+  enableTwoFactor,
 };

@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+
 const cors = require("cors");
 const logRequestToFile = require("./middlewares/logger.middleware");
 const authenticateUser = require("./middlewares/auth.middleware");
@@ -18,6 +20,8 @@ app.use(bodyParser.json());
 app.use(morgan("dev"));
 app.use(cors());
 app.use(enableCORS);
+app.use(cookieParser());
+
 app.use(logRequestToFile);
 
 mongoose

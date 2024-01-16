@@ -9,8 +9,11 @@ const userSchema = new mongoose.Schema({
   bio: String,
   avatar: String,
   role: { type: String, enum: ["admin", "author", "user"], required: true },
+  refreshToken: String,
+  twofactorSecret: String,
   createdAt: { type: Date, default: Date.now },
   updatedAt: Date,
+
   verified: {
     type: Boolean,
     default: false,
