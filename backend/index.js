@@ -12,8 +12,10 @@ const dotenv = require("dotenv");
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
 const morgan = require("morgan");
+const passport = require("passport");
 dotenv.config();
-
+const session = require("express-session");
+const blogPostRoutes = require("./routes/blog.routes");
 const app = express();
 
 app.use(bodyParser.json());
@@ -35,33 +37,37 @@ mongoose
   .catch((err) => {
     console.error("Error connecting to MongoDB:", err);
   });
+app.get("/", (req, res) => {
+  res.send("ok");
+});
 
-// const blogPostRoutes = require("./routes/blogpost.routes");
-// const { session } = require("passport");
-// app.use(
-//   session({
-//     secret: "yourSessionSecret",
-//     resave: true,
-//     saveUninitialized: true,
-//   })
-// );
-// app.use(passport.initialize());
-// app.use(passport.session());
-// app.get(
-//   "/auth/login/google",
-//   passport.authenticate("google", { scope: ["profile", "email"] })
-// );
+app.use(
+  session({
+    secret: "yourSessionSecret",
+    resave: true,
+    saveUninitialized: true,
+  })
+);
 
-// app.get(
-//   "/auth/login/google/callback",
-//   passport.authenticate("google", { failureRedirect: "/login" }),
-//   (req, res) => {
-//     res.redirect("/user/profile");
-//   }
-// );
+app.use(passport.initialize());
+app.use(passport.session());
+app.get(
+  "/auth/login/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    res.redirect("/");
+  }
+);
+
 app.use("/users", userRoutes);
 app.use("/api/auth/user", authRoutes);
-// app.use("/blogposts", authenticateUser, blogPostRoutes);
+
+app.use("/blog", authenticateUser.authenticateToken, blogPostRoutes);
 
 app.use(handleErrors);
 

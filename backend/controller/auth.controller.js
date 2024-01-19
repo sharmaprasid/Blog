@@ -36,6 +36,7 @@ async function register(req, res) {
       message: "User registered successfully. Verification email sent.",
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -138,6 +139,21 @@ async function login(req, res) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+async function logout(req, res) {
+  try {
+    res.cookie("Authorization", "", {
+      expires: new Date(0),
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+
+    res.status(200).json({ message: "Cookie Deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
 
 async function refreshToken(req, res) {
   try {
@@ -213,4 +229,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   enableTwoFactor,
+  logout,
 };

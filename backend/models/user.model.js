@@ -1,14 +1,35 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+
 const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  email: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+    lowercase: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: function () {
+      return !this.googleId;
+    },
+  },
+  username: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true,
+  },
   firstName: String,
   lastName: String,
   bio: String,
   avatar: String,
-  role: { type: String, enum: ["admin", "author", "user"], required: true },
+  role: {
+    type: String,
+    enum: ["admin", "author", "user"],
+    required: true,
+    default: "user", // Default role for email/password users
+  },
   refreshToken: String,
   twofactorSecret: String,
   createdAt: { type: Date, default: Date.now },
@@ -21,6 +42,16 @@ const userSchema = new mongoose.Schema({
   lastLogin: Date,
   socialLinks: Object,
   preferences: Object,
+
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+
+  googleAccessToken: String,
+  googleRefreshToken: String,
+  googleProfile: Object,
 });
 
 const User = mongoose.model("User", userSchema);

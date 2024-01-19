@@ -1,5 +1,5 @@
 const express = require("express");
-// const passport = require("../utils/passportUtils");
+const passport = require("../utils/passport");
 const authController = require("../controller/auth.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 const twofactorMiddleware = require("../middlewares/twofactor.middleware");
@@ -18,20 +18,22 @@ router.post(
   authController.enableTwoFactor
 );
 router.post("/login", authController.login);
+router.post("/logout", authController.logout);
+
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 
-// router.get(
-//   "/login/google",
-//   passport.authenticate("google", { scope: ["profile", "email"] })
-// );
-// router.get(
-//   "/login/google/callback",
-//   passport.authenticate("google", { failureRedirect: "/login" }),
-//   (req, res) => {
-//     res.redirect("/user/profile");
-//   }
-// );
+router.get(
+  "/login/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+router.get(
+  "/login/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    res.redirect("/user/profile");
+  }
+);
 
 router.post(
   "/refresh-token",
